@@ -118,6 +118,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🚫 Solo se acepta la *foto del comprobante de pago*. Por favor, envía únicamente la imagen del pago.", parse_mode="Markdown")
 
 # ================== MAIN ==================
+
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -134,8 +135,11 @@ if __name__ == "__main__":
     import asyncio
 
     try:
-        asyncio.run(main())
-    except RuntimeError:
-        import nest_asyncio
-        nest_asyncio.apply()
         asyncio.get_event_loop().run_until_complete(main())
+    except RuntimeError as e:
+        if str(e) == 'This event loop is already running':
+            import nest_asyncio
+            nest_asyncio.apply()
+            asyncio.get_event_loop().run_until_complete(main())
+        else:
+            raise
