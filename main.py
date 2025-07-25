@@ -1,36 +1,49 @@
 import logging
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+    ContextTypes
+)
 
-# Configuración
+# ================== CONFIGURACIÓN ==================
 BOT_TOKEN = "8436589239:AAEujmfBEjZD1jpU-LENDewQ5klxWZtPQh0"
 ADMIN_USERNAME = "@lester_og"
 ADMIN_CHAT_ID = 123456789  # 🚩 Sustituye con tu CHAT_ID real
 
-# Inicializar DB
+# ================== INICIALIZAR BASE DE DATOS ==================
 conn = sqlite3.connect("orders.db", check_same_thread=False)
 cursor = conn.cursor()
-cursor.execute('''
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS orders (
     user_id INTEGER PRIMARY KEY,
     username TEXT,
     plan TEXT
 )
-''')
+""")
 conn.commit()
 
+# ================== LOGGING ==================
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Comandos
+# ================== HANDLERS ==================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🤖 *Bienvenido al Bot de Proxies!*\n\nSelecciona un plan para continuar:"
     keyboard = [
         [InlineKeyboardButton("🔥 PIA S5 - 200 IPs - 20$", callback_data="PIA_200")],
-        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB")],
+        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB")]
     ]
-    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+    await update.message.reply_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -58,7 +71,13 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     plan = row[0].replace("_", " ")
     photo = update.message.photo[-1].file_id
     keyboard = [[InlineKeyboardButton("✅ Enviar Key", callback_data=f"send_key_{user_id}")]]
-    caption = f"🧾 *Nuevo Pago Recibido*\n\n👤 Usuario: @{user.username or 'SinUsername'}\n🆔 ID: `{user_id}`\n📦 Plan: *{plan}*\n\nPresiona para enviar la key."
+    caption = (
+        f"🧾 *Nuevo Pago Recibido*\n\n"
+        f"👤 Usuario: @{user.username or 'SinUsername'}\n"
+        f"🆔 ID: `{user_id}`\n"
+        f"📦 Plan: *{plan}*\n\n"
+        f"Presiona para enviar la key."
+    )
     await context.bot.send_photo(
         chat_id=ADMIN_CHAT_ID,
         photo=photo,
@@ -76,7 +95,7 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
     if data.startswith("send_key_"):
         user_id = int(data.split("_")[-1])
         context.user_data["awaiting_key_for"] = user_id
-        await query.message.reply_text("✏️ Envía la *key* que deseas entregar al cliente.")
+        await query.message.reply_text("✏️ Envía la *key* que deseas entregar al cliente.", parse_mode="Markdown")
 
 async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if "awaiting_key_for" in context.user_data:
@@ -98,17 +117,25 @@ async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🚫 Solo se acepta la *foto del comprobante de pago*. Por favor, envía únicamente la imagen del pago.", parse_mode="Markdown")
 
-# Main
+# ================== MAIN ==================
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler, pattern="^(PIA_|ABC_)"))
     app.add_handler(CallbackQueryHandler(callback_query_handler, pattern="^send_key_"))
     app.add_handler(MessageHandler(filters.PHOTO & filters.ChatType.PRIVATE, photo_handler))
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, key_delivery_handler))
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, text_handler))
+
     await app.run_polling()
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+
+    try:
+        asyncio.run(main())
+    except RuntimeError:
+        import nest_asyncio
+        nest_asyncio.apply()
+        asyncio.get_event_loop().run_until_complete(main())
