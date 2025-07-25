@@ -1,145 +1,130 @@
+# Generando y preparando el archivo main.py limpio, comentado y funcional con SQLite
+# para automatización de venta de proxies con confirmación manual por parte del admin.
+
+main_code = """
+import logging
+import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, CallbackQueryHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 
-OWNER_USERNAME = "@lester_og"
-OWNER_CHAT_ID = 7926331993 # Cambiar por tu chat_id numérico
-USDT_WALLET = "TP1PTzXWzyySpEiM6paWRL9rFZwF3M9wzn"
+# Configuración
+BOT_TOKEN = "8436589239:AAEujmfBEjZD1jpU-LENDewQ5klxWZtPQh0"
+ADMIN_USERNAME = "@lester_og"  # Para mostrar en mensajes
+ADMIN_CHAT_ID = 123456789      # 🚩 Coloca aquí tu chat_id de Telegram (te lo puedo generar si no lo sabes)
 
-purchase_options = [
-    ("ABC S5 200 IPs - $20", "abc_200"),
-    ("ABC S5 400 IPs - $35", "abc_400"),
-    ("ABC S5 800 IPs - $55", "abc_800"),
-    ("ABC S5 1600 IPs - $110", "abc_1600"),
-    ("PÍA S5 200 IPs - $20", "pia_200"),
-    ("PÍA S5 400 IPs - $35", "pia_400"),
-    ("PÍA S5 800 IPs - $55", "pia_800"),
-    ("PÍA S5 1600 IPs - $110", "pia_1600"),
-    ("9 PROXY 200 IPs - $20", "9proxy_200"),
-    ("9 PROXY 400 IPs - $35", "9proxy_400"),
-    ("9 PROXY 800 IPs - $55", "9proxy_800"),
-    ("9 PROXY 2000 IPs - $120", "9proxy_2000")
-]
+# Inicializar DB
+conn = sqlite3.connect("orders.db", check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS orders (
+    user_id INTEGER PRIMARY KEY,
+    username TEXT,
+    plan TEXT
+)
+''')
+conn.commit()
 
-def load_keys(file):
-    try:
-        with open(file, "r") as f:
-            return [line.strip() for line in f.readlines() if line.strip()]
-    except FileNotFoundError:
-        return []
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def pop_key(file):
-    keys = load_keys(file)
-    if keys:
-        key = keys.pop(0)
-        with open(file, "w") as f:
-            for k in keys:
-                f.write(k + "\n")
-        return key
-    else:
-        return "❌ Sin stock para este plan. Contacta soporte."
-
-pia_keys_file = "pia_keys.txt"
-abc_keys_file = "abc_keys.txt"
-
+# Comandos
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 *Bienvenido a Proxy Bot S5/ABC*\n\n"
-        "Usa /comprar para ver precios y formas de pago.\n"
-        "Usa /stock para ver proxies disponibles.\n"
-        "Usa /help si necesitas asistencia."
-    )
-
-async def comprar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [[InlineKeyboardButton(text=name, callback_data=code)] for name, code in purchase_options]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "🛒 *Selecciona la opción que deseas comprar:*",
-        reply_markup=reply_markup
-    )
+    text = "🤖 *Bienvenido al Bot de Proxies!*\n\nSelecciona un plan para continuar:"
+    keyboard = [
+        [InlineKeyboardButton("🔥 PIA S5 - 200 IPs - 20$", callback_data="PIA_200")],
+        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB")],
+    ]
+    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    item = query.data
-    context.user_data['pedido'] = item
-
-    await query.edit_message_text(
-        f"✅ Seleccionaste: *{item.replace('_', ' ').upper()}*\n\n"
-        f"💸 Envía el pago correspondiente a la siguiente wallet USDT (TRC20):\n`{USDT_WALLET}`\n\n"
-        f"Tras el pago, envía aquí el comprobante de transacción para validarlo y recibir tus proxies."
+    plan = query.data
+    user = query.from_user
+    cursor.execute("REPLACE INTO orders (user_id, username, plan) VALUES (?, ?, ?)",
+                   (user.id, user.username or "SinUsername", plan))
+    conn.commit()
+    await query.message.reply_text(
+        "✅ Plan seleccionado: *{}*\n\nPor favor, envía *SOLO la foto del comprobante de pago* para procesar tu orden.".format(plan.replace("_", " ")),
+        parse_mode="Markdown"
     )
 
-async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        f"📦 *Stock Disponible:*\n"
-        f"- PÍA Proxy S5: {len(load_keys(pia_keys_file))} disponibles\n"
-        f"- ABC S5-ABC GB: {len(load_keys(abc_keys_file))} disponibles\n\n"
-        "Compra ahora antes de que se agoten."
-    )
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👨‍💻 *Soporte:*\n"
-        f"Si tienes dudas, escribe aquí o contacta {OWNER_USERNAME}.\n"
-        "Tras el pago, envía el comprobante aquí para recibir tus proxies."
-    )
-
-async def forward_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
-    chat_id = update.message.chat_id
-    context.user_data['buyer_chat_id'] = chat_id
+    user_id = user.id
+    cursor.execute("SELECT plan FROM orders WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ Confirmar", callback_data=f"confirm_{chat_id}")]
-    ])
+    if row is None:
+        await update.message.reply_text("🚫 No has seleccionado un plan. Usa /start para elegir un plan antes de enviar tu comprobante.")
+        return
 
-    if update.message.photo:
-        file_id = update.message.photo[-1].file_id
-        await context.bot.send_photo(
-            chat_id=OWNER_CHAT_ID,
-            photo=file_id,
-            caption=f"💰 *Nuevo comprobante de pago de @{user.username or user.id}*\nID: {user.id}",
-            reply_markup=keyboard
-        )
-    else:
-        await context.bot.send_message(
-            chat_id=OWNER_CHAT_ID,
-            text=f"💰 *Nuevo comprobante de pago de @{user.username or user.id}*\nID: {user.id}\n\n{update.message.text}",
-            reply_markup=keyboard
-        )
+    plan = row[0].replace("_", " ")
+    # Enviar al admin
+    photo = update.message.photo[-1].file_id
+    keyboard = [[InlineKeyboardButton("✅ Enviar Key", callback_data=f"send_key_{user_id}")]]
+    caption = f"🧾 *Nuevo Pago Recibido*\n\n👤 Usuario: @{user.username or 'SinUsername'}\n🆔 ID: `{user_id}`\n📦 Plan: *{plan}*\n\nPor favor, presiona el botón para enviar la key."
+    await context.bot.send_photo(
+        chat_id=ADMIN_CHAT_ID,
+        photo=photo,
+        caption=caption,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+    await update.message.reply_text("✅ Comprobante recibido. Tu pago está en revisión, espera a que el administrador confirme tu key.")
 
-    await update.message.reply_text("✅ Comprobante enviado para revisión. Recibirás tu proxy tras la verificación.")
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🚫 Solo se acepta la *foto del comprobante de pago*. Por favor, envía únicamente la imagen del pago.", parse_mode="Markdown")
 
-async def confirm_delivery(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    _, buyer_chat_id = query.data.split("_")
-    buyer_chat_id = int(buyer_chat_id)
+    data = query.data
 
-    pedido = context.user_data.get('pedido', 'sin_selección')
-    if pedido.startswith("pia"):
-        key = pop_key(pia_keys_file)
-    elif pedido.startswith("abc"):
-        key = pop_key(abc_keys_file)
+    if data.startswith("send_key_"):
+        user_id = int(data.split("_")[-1])
+        context.user_data["awaiting_key_for"] = user_id
+        await query.message.reply_text("✏️ Envía la *key* que deseas entregar al cliente.")
+        return
+
+async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "awaiting_key_for" in context.user_data:
+        user_id = context.user_data["awaiting_key_for"]
+        key_text = update.message.text
+
+        # Enviar al cliente
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=f"🎉 *Pago confirmado.* Aquí está tu key:\n\n`{key_text}`\n\nGracias por tu compra.",
+            parse_mode="Markdown"
+        )
+        await update.message.reply_text("✅ Key enviada correctamente al cliente.")
+        cursor.execute("DELETE FROM orders WHERE user_id = ?", (user_id,))
+        conn.commit()
+        del context.user_data["awaiting_key_for"]
     else:
-        key = "❌ No se pudo identificar el plan. Contacta al admin."
+        await update.message.reply_text("🚫 No estás confirmando ninguna key actualmente.")
 
-    await context.bot.send_message(
-        chat_id=buyer_chat_id,
-        text=f"🎉 *Pago confirmado.* Aquí está tu proxy:\n\n`{key}`\n\nGracias por tu compra."
-    )
-    await query.edit_message_text("✅ Proxy enviado al cliente.")
+# Main
+async def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(PIA_|ABC_)"))
+    app.add_handler(CallbackQueryHandler(callback_query_handler, pattern="^send_key_"))
+    app.add_handler(MessageHandler(filters.PHOTO & filters.ChatType.PRIVATE, photo_handler))
+    app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, key_delivery_handler))
+    app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, text_handler))
+    await app.run_polling()
 
-app = ApplicationBuilder().token("8436589239:AAEujmfBEjZD1jpU-LENDewQ5klxWZtPQh0").build()
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+"""
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("comprar", comprar))
-app.add_handler(CommandHandler("stock", stock))
-app.add_handler(CommandHandler("help", help_command))
-app.add_handler(CallbackQueryHandler(button_handler, pattern="^(?!confirm_).*"))
-app.add_handler(CallbackQueryHandler(confirm_delivery, pattern="^confirm_"))
-app.add_handler(MessageHandler(filters.PHOTO | filters.TEXT & (~filters.COMMAND), forward_confirmation))
+# Guardar el archivo listo para el usuario
+with open("/mnt/data/main.py", "w", encoding="utf-8") as f:
+    f.write(main_code)
 
-print("🤖 Bot corriendo y listo con autoentrega tras confirmación...")
+# Listo para entregar
+"/mnt/data/main.py listo para descargar y reemplazar en Railway"
 
-app.run_polling()
