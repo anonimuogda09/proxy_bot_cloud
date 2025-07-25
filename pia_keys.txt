@@ -1,0 +1,2 @@
+usuarioB:passB@ip:puerto
+usuarioC:passC@ip:puerto
