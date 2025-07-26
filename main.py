@@ -11,7 +11,7 @@ from telegram.ext import (
 )
 
 # ================== CONFIGURACIÓN ==================
-BOT_TOKEN = "8436589239:AAEujmfBEjZD1jpU-LENDewQ5klxWZtPQh0"
+BOT_TOKEN = "TOKEN_AQUI"
 ADMIN_USERNAME = "@lester_og"
 ADMIN_CHAT_ID = 123456789  # 🚩 Sustituye con tu CHAT_ID real
 
@@ -119,7 +119,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ================== MAIN ==================
 
-async def main():
+if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -129,17 +129,4 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, key_delivery_handler))
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, text_handler))
 
-    await app.run_polling()
-
-if __name__ == "__main__":
-    import asyncio
-
-    try:
-        asyncio.get_event_loop().run_until_complete(main())
-    except RuntimeError as e:
-        if str(e) == 'This event loop is already running':
-            import nest_asyncio
-            nest_asyncio.apply()
-            asyncio.get_event_loop().run_until_complete(main())
-        else:
-            raise
+    app.run_polling()  # 👈 Esto evita los errores de event loop en Railway
