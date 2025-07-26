@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 # Configuración
 BOT_TOKEN = "8436589239:AAEujmfBEjZD1jpU-LENDewQ5klxWZtPQh0"
 ADMIN_USERNAME = "@lester_og"
-ADMIN_CHAT_ID = 7926331993  # Tu chat_id
+ADMIN_CHAT_ID = 7926331993
 
 # Inicializar DB
 conn = sqlite3.connect("orders.db", check_same_thread=False)
@@ -37,22 +37,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🔥 ABC S5 - 10GB - 18$", callback_data="ABC_10GB")],
         [InlineKeyboardButton("🔥 ABC S5 - 20GB - 30$", callback_data="ABC_20GB")],
         [InlineKeyboardButton("🔥 ABC S5 - 50GB - 65$", callback_data="ABC_50GB")],
-        [InlineKeyboardButton("🔥 9 PROXY - 200 IPs - 20$", callback_data="9PROXY_200")],
-        [InlineKeyboardButton("🔥 9 PROXY - 400 IPs - 35$", callback_data="9PROXY_400")],
-        [InlineKeyboardButton("🔥 9 PROXY - 800 IPs - 55$", callback_data="9PROXY_800")],
-        [InlineKeyboardButton("🔥 9 PROXY - 2000 IPs - 120$", callback_data="9PROXY_2000")]
+        [InlineKeyboardButton("🔥 9PROXY - 200 IPs - 20$", callback_data="9PROXY_200")],
+        [InlineKeyboardButton("🔥 9PROXY - 400 IPs - 35$", callback_data="9PROXY_400")],
+        [InlineKeyboardButton("🔥 9PROXY - 800 IPs - 55$", callback_data="9PROXY_800")],
+        [InlineKeyboardButton("🔥 9PROXY - 2000 IPs - 120$", callback_data="9PROXY_2000")],
     ]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 # Comando /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
-        "🤖 *Ayuda del Bot de Proxies*\n\n"
-        "• Usa /start para comenzar y elegir un plan.\n"
-        "• Selecciona la red de pago (TRC20 o BEP20).\n"
-        "• Envía *solo la foto del comprobante* de tu pago.\n"
-        "• El administrador confirmará y recibirás tu key.\n\n"
-        "Si tienes dudas, contacta a: " + ADMIN_USERNAME
+        "📚 *Ayuda del Bot de Proxies*\n\n"
+        "✅ Usa /start para ver los planes disponibles y comenzar tu compra.\n"
+        "✅ Selecciona la red de pago y envía tu comprobante.\n"
+        "✅ Recibirás tu key tras la confirmación.\n\n"
+        f"🚨 *Soporte*: Si tienes dudas o problemas, escríbeme directo aquí:\n{ADMIN_USERNAME}\n\n"
+        "🤖 Gracias por usar el bot de proxies."
     )
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
@@ -67,14 +67,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    (user.id, user.username or "SinUsername", plan, ""))
     conn.commit()
 
-    text = f"✅ Plan seleccionado: *{plan.replace('_', ' ')}*\n\nSelecciona la red para el pago:"
+    text = f"✅ Plan seleccionado: *{plan.replace('_', ' ')}*\n\nSelecciona la red de pago:"
     keyboard = [
         [InlineKeyboardButton("USDT TRC20", callback_data="wallet_TRC20")],
         [InlineKeyboardButton("USDT BEP20", callback_data="wallet_BEP20")],
     ]
     await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
-# Elección de wallet
+# Selección de wallet
 async def wallet_selection_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -96,7 +96,7 @@ async def wallet_selection_handler(update: Update, context: ContextTypes.DEFAULT
     text = (
         f"💰 *Dirección de pago para {wallet_type}:*\n\n"
         f"`{wallet_address}`\n\n"
-        f"Envía el pago y luego *SOLO la foto del comprobante* aquí para procesar tu orden."
+        "Envía el pago y luego *SOLO la foto del comprobante* aquí."
     )
     await query.message.reply_text(text, parse_mode="Markdown")
 
@@ -108,10 +108,10 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     row = cursor.fetchone()
 
     if row is None or not row[1]:
-        await update.message.reply_text("🚫 No has seleccionado un plan y red de pago. Usa /start para comenzar.")
+        await update.message.reply_text("🚫 Usa /start y selecciona plan y red antes de enviar el comprobante.")
         return
 
-    plan = row[0].replace("_", " ")
+    plan = row[0].replace('_', ' ')
     wallet_type = row[1]
     photo = update.message.photo[-1].file_id
 
@@ -122,7 +122,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🆔 ID: `{user_id}`\n"
         f"📦 Plan: *{plan}*\n"
         f"💰 Wallet: *{wallet_type}*\n\n"
-        f"Presiona para enviar la key."
+        "Presiona para enviar la key al cliente."
     )
     await context.bot.send_photo(
         chat_id=ADMIN_CHAT_ID,
@@ -131,9 +131,9 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
-    await update.message.reply_text("✅ Comprobante recibido. Tu pago está en revisión, espera a que el administrador confirme tu key.")
+    await update.message.reply_text("✅ Comprobante recibido. Tu pago está en revisión, espera confirmación.")
 
-# Enviar key al usuario
+# Confirmación y envío de key
 async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -142,9 +142,9 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
     if data.startswith("send_key_"):
         user_id = int(data.split("_")[-1])
         context.user_data["awaiting_key_for"] = user_id
-        await query.message.reply_text("✏️ Envía la *key* que deseas entregar al cliente.")
+        await query.message.reply_text("✏️ Envía *ahora la key* que deseas entregar a este cliente.")
 
-# Recepción y entrega de key
+# Recepción de key y entrega al cliente
 async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if "awaiting_key_for" in context.user_data:
         user_id = context.user_data["awaiting_key_for"]
