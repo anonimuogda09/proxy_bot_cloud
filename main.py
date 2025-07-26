@@ -28,26 +28,33 @@ logger = logging.getLogger(__name__)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🤖 *Bienvenido al Bot de Proxies!*\n\nSelecciona un plan para continuar:"
     keyboard = [
-        [InlineKeyboardButton("🔥 ABC S5 - 200ips - 20$", callback_data="ABC_200ips_20")],
-        [InlineKeyboardButton("🔥 ABC S5 - 400ips - 35$", callback_data="ABC_400ips_35")],
-        [InlineKeyboardButton("🔥 ABC S5 - 800ips - 55$", callback_data="ABC_800ips_55")],
-        [InlineKeyboardButton("🔥 ABC S5 - 1600ips - 110$", callback_data="ABC_1600ips_110")],
-        [InlineKeyboardButton("🔥 ABC S5 - 3400ips - 180$", callback_data="ABC_3400ips_180")],
-        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB_5.50")],
-        [InlineKeyboardButton("🔥 ABC S5 - 5GB - 12$", callback_data="ABC_5GB_12")],
-        [InlineKeyboardButton("🔥 ABC S5 - 10GB - 18$", callback_data="ABC_10GB_18")],
-        [InlineKeyboardButton("🔥 ABC S5 - 20GB - 30$", callback_data="ABC_20GB_30")],
-        [InlineKeyboardButton("🔥 ABC S5 - 50GB - 65$", callback_data="ABC_50GB_65")],
-        [InlineKeyboardButton("🔥 PIA S5 - 200ips - 20$", callback_data="PIA_200ips_20")],
-        [InlineKeyboardButton("🔥 PIA S5 - 400ips - 35$", callback_data="PIA_400ips_35")],
-        [InlineKeyboardButton("🔥 PIA S5 - 800ips - 55$", callback_data="PIA_800ips_55")],
-        [InlineKeyboardButton("🔥 PIA S5 - 1600ips - 110$", callback_data="PIA_1600ips_110")],
-        [InlineKeyboardButton("🔥 9 PROXY - 200ips - 20$", callback_data="9PROXY_200ips_20")],
-        [InlineKeyboardButton("🔥 9 PROXY - 400ips - 35$", callback_data="9PROXY_400ips_35")],
-        [InlineKeyboardButton("🔥 9 PROXY - 800ips - 55$", callback_data="9PROXY_800ips_55")],
-        [InlineKeyboardButton("🔥 9 PROXY - 2000ips - 120$", callback_data="9PROXY_2000ips_120")],
+        [InlineKeyboardButton("🔥 PIA S5 - 200 IPs - 20$", callback_data="PIA_200")],
+        [InlineKeyboardButton("🔥 PIA S5 - 400 IPs - 35$", callback_data="PIA_400")],
+        [InlineKeyboardButton("🔥 PIA S5 - 800 IPs - 55$", callback_data="PIA_800")],
+        [InlineKeyboardButton("🔥 PIA S5 - 1600 IPs - 110$", callback_data="PIA_1600")],
+        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB")],
+        [InlineKeyboardButton("🔥 ABC S5 - 5GB - 12$", callback_data="ABC_5GB")],
+        [InlineKeyboardButton("🔥 ABC S5 - 10GB - 18$", callback_data="ABC_10GB")],
+        [InlineKeyboardButton("🔥 ABC S5 - 20GB - 30$", callback_data="ABC_20GB")],
+        [InlineKeyboardButton("🔥 ABC S5 - 50GB - 65$", callback_data="ABC_50GB")],
+        [InlineKeyboardButton("🔥 9 PROXY - 200 IPs - 20$", callback_data="9PROXY_200")],
+        [InlineKeyboardButton("🔥 9 PROXY - 400 IPs - 35$", callback_data="9PROXY_400")],
+        [InlineKeyboardButton("🔥 9 PROXY - 800 IPs - 55$", callback_data="9PROXY_800")],
+        [InlineKeyboardButton("🔥 9 PROXY - 2000 IPs - 120$", callback_data="9PROXY_2000")]
     ]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+
+# Comando /help
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = (
+        "🤖 *Ayuda del Bot de Proxies*\n\n"
+        "• Usa /start para comenzar y elegir un plan.\n"
+        "• Selecciona la red de pago (TRC20 o BEP20).\n"
+        "• Envía *solo la foto del comprobante* de tu pago.\n"
+        "• El administrador confirmará y recibirás tu key.\n\n"
+        "Si tienes dudas, contacta a: " + ADMIN_USERNAME
+    )
+    await update.message.reply_text(help_text, parse_mode="Markdown")
 
 # Selección de plan
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -62,8 +69,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = f"✅ Plan seleccionado: *{plan.replace('_', ' ')}*\n\nSelecciona la red para el pago:"
     keyboard = [
-        [InlineKeyboardButton("💸 USDT TRC20", callback_data="wallet_TRC20")],
-        [InlineKeyboardButton("💸 USDT BEP20", callback_data="wallet_BEP20")],
+        [InlineKeyboardButton("USDT TRC20", callback_data="wallet_TRC20")],
+        [InlineKeyboardButton("USDT BEP20", callback_data="wallet_BEP20")],
     ]
     await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
@@ -104,7 +111,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🚫 No has seleccionado un plan y red de pago. Usa /start para comenzar.")
         return
 
-    plan = row[0].replace('_', ' ')
+    plan = row[0].replace("_", " ")
     wallet_type = row[1]
     photo = update.message.photo[-1].file_id
 
@@ -115,7 +122,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🆔 ID: `{user_id}`\n"
         f"📦 Plan: *{plan}*\n"
         f"💰 Wallet: *{wallet_type}*\n\n"
-        f"Presiona para enviar la key a este cliente de forma segura."
+        f"Presiona para enviar la key."
     )
     await context.bot.send_photo(
         chat_id=ADMIN_CHAT_ID,
@@ -126,7 +133,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text("✅ Comprobante recibido. Tu pago está en revisión, espera a que el administrador confirme tu key.")
 
-# Botón enviar key seguro
+# Enviar key al usuario
 async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -134,19 +141,13 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
 
     if data.startswith("send_key_"):
         user_id = int(data.split("_")[-1])
+        context.user_data["awaiting_key_for"] = user_id
+        await query.message.reply_text("✏️ Envía la *key* que deseas entregar al cliente.")
 
-        # Guardar en bot_data el user_id esperando key asociado al ADMIN_CHAT_ID
-        if "awaiting_keys" not in context.bot_data:
-            context.bot_data["awaiting_keys"] = {}
-
-        context.bot_data["awaiting_keys"][ADMIN_CHAT_ID] = user_id
-
-        await query.message.reply_text(f"✏️ Envía la *key* que deseas entregar a este cliente ahora.", parse_mode="Markdown")
-
-# Recepción de key segura
+# Recepción y entrega de key
 async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if "awaiting_keys" in context.bot_data and ADMIN_CHAT_ID in context.bot_data["awaiting_keys"]:
-        user_id = context.bot_data["awaiting_keys"][ADMIN_CHAT_ID]
+    if "awaiting_key_for" in context.user_data:
+        user_id = context.user_data["awaiting_key_for"]
         key_text = update.message.text
 
         await context.bot.send_message(
@@ -155,11 +156,9 @@ async def key_delivery_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode="Markdown"
         )
         await update.message.reply_text("✅ Key enviada correctamente al cliente.")
-
         cursor.execute("DELETE FROM orders WHERE user_id = ?", (user_id,))
         conn.commit()
-
-        del context.bot_data["awaiting_keys"][ADMIN_CHAT_ID]
+        del context.user_data["awaiting_key_for"]
     else:
         await update.message.reply_text("🚫 No estás confirmando ninguna key actualmente.")
 
@@ -170,11 +169,12 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-# Main
+# Main para Railway
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(ABC_|PIA_|9PROXY_)"))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(PIA_|ABC_|9PROXY_)"))
     app.add_handler(CallbackQueryHandler(wallet_selection_handler, pattern="^wallet_"))
     app.add_handler(CallbackQueryHandler(callback_query_handler, pattern="^send_key_"))
     app.add_handler(MessageHandler(filters.PHOTO & filters.ChatType.PRIVATE, photo_handler))
