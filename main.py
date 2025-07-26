@@ -28,20 +28,21 @@ logger = logging.getLogger(__name__)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🤖 *Bienvenido al Bot de Proxies!*\n\nSelecciona un plan para continuar:"
     keyboard = [
-        [InlineKeyboardButton("🔥 ABC S5 - 1GB - 5.50$", callback_data="ABC_1GB"),
-         InlineKeyboardButton("🔥 ABC S5 - 5GB - 12$", callback_data="ABC_5GB")],
-        [InlineKeyboardButton("🔥 ABC S5 - 10GB - 18$", callback_data="ABC_10GB"),
-         InlineKeyboardButton("🔥 ABC S5 - 20GB - 30$", callback_data="ABC_20GB")],
-        [InlineKeyboardButton("🔥 ABC S5 - 50GB - 65$", callback_data="ABC_50GB")],
-        [InlineKeyboardButton("🔥 PIA S5 - 200 IPs - 20$", callback_data="PIA_200"),
-         InlineKeyboardButton("🔥 PIA S5 - 400 IPs - 35$", callback_data="PIA_400")],
-        [InlineKeyboardButton("🔥 PIA S5 - 800 IPs - 55$", callback_data="PIA_800"),
-         InlineKeyboardButton("🔥 PIA S5 - 1600 IPs - 110$", callback_data="PIA_1600")],
-        [InlineKeyboardButton("🔥 9 Proxy - 200 IPs - 20$", callback_data="9PROXY_200"),
-         InlineKeyboardButton("🔥 9 Proxy - 400 IPs - 35$", callback_data="9PROXY_400")],
-        [InlineKeyboardButton("🔥 9 Proxy - 800 IPs - 55$", callback_data="9PROXY_800"),
-         InlineKeyboardButton("🔥 9 Proxy - 2000 IPs - 120$", callback_data="9PROXY_2000")]
-    ]
+    [InlineKeyboardButton(text="🔥 ABC S5 - 1GB - $5.50", callback_data="ABC_1GB"),
+     InlineKeyboardButton(text="🔥 ABC S5 - 5GB - $12", callback_data="ABC_5GB")],
+    [InlineKeyboardButton(text="🔥 ABC S5 - 10GB - $18", callback_data="ABC_10GB"),
+     InlineKeyboardButton(text="🔥 ABC S5 - 20GB - $30", callback_data="ABC_20GB")],
+    [InlineKeyboardButton(text="🔥 ABC S5 - 50GB - $65", callback_data="ABC_50GB")],
+    [InlineKeyboardButton(text="🔥 PIA S5 - 200 IPs - $20", callback_data="PIA_200"),
+     InlineKeyboardButton(text="🔥 PIA S5 - 400 IPs - $35", callback_data="PIA_400")],
+    [InlineKeyboardButton(text="🔥 PIA S5 - 800 IPs - $55", callback_data="PIA_800"),
+     InlineKeyboardButton(text="🔥 PIA S5 - 1600 IPs - $110", callback_data="PIA_1600")],
+    [InlineKeyboardButton(text="🔥 9 Proxy - 200 IPs - $20", callback_data="9PROXY_200"),
+     InlineKeyboardButton(text="🔥 9 Proxy - 400 IPs - $35", callback_data="9PROXY_400")],
+    [InlineKeyboardButton(text="🔥 9 Proxy - 800 IPs - $55", callback_data="9PROXY_800"),
+     InlineKeyboardButton(text="🔥 9 Proxy - 2000 IPs - $120", callback_data="9PROXY_2000")]
+]
+
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 # Comando /help
