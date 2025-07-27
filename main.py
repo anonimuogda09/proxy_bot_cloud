@@ -26,23 +26,25 @@ logger = logging.getLogger(__name__)
 
 # Comando /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = "🤖 *Bienvenido al Bot de Proxies!*\n\nSelecciona un plan para continuar:"
+    text = (
+        "🤖 *Bienvenido al Bot de Proxies!*\n\n"
+        "Selecciona un plan para continuar. El precio se mostrará al seleccionar el plan:"
+    )
     keyboard = [
-    [InlineKeyboardButton(text="🔥 ABC S5 - 1GB - $5.50", callback_data="ABC_1GB"),
-     InlineKeyboardButton(text="🔥 ABC S5 - 5GB - $12", callback_data="ABC_5GB")],
-    [InlineKeyboardButton(text="🔥 ABC S5 - 10GB - $18", callback_data="ABC_10GB"),
-     InlineKeyboardButton(text="🔥 ABC S5 - 20GB - $30", callback_data="ABC_20GB")],
-    [InlineKeyboardButton(text="🔥 ABC S5 - 50GB - $65", callback_data="ABC_50GB")],
-    [InlineKeyboardButton(text="🔥 PIA S5 - 200 IPs - $20", callback_data="PIA_200"),
-     InlineKeyboardButton(text="🔥 PIA S5 - 400 IPs - $35", callback_data="PIA_400")],
-    [InlineKeyboardButton(text="🔥 PIA S5 - 800 IPs - $55", callback_data="PIA_800"),
-     InlineKeyboardButton(text="🔥 PIA S5 - 1600 IPs - $110", callback_data="PIA_1600")],
-    [InlineKeyboardButton(text="🔥 9 Proxy - 200 IPs - $20", callback_data="9PROXY_200"),
-     InlineKeyboardButton(text="🔥 9 Proxy - 400 IPs - $35", callback_data="9PROXY_400")],
-    [InlineKeyboardButton(text="🔥 9 Proxy - 800 IPs - $55", callback_data="9PROXY_800"),
-     InlineKeyboardButton(text="🔥 9 Proxy - 2000 IPs - $120", callback_data="9PROXY_2000")]
-]
-
+        [InlineKeyboardButton("🔥 ABC 1GB", callback_data="ABC_1GB"),
+         InlineKeyboardButton("🔥 ABC 5GB", callback_data="ABC_5GB")],
+        [InlineKeyboardButton("🔥 ABC 10GB", callback_data="ABC_10GB"),
+         InlineKeyboardButton("🔥 ABC 20GB", callback_data="ABC_20GB")],
+        [InlineKeyboardButton("🔥 ABC 50GB", callback_data="ABC_50GB")],
+        [InlineKeyboardButton("🔥 PIA 200IPs", callback_data="PIA_200"),
+         InlineKeyboardButton("🔥 PIA 400IPs", callback_data="PIA_400")],
+        [InlineKeyboardButton("🔥 PIA 800IPs", callback_data="PIA_800"),
+         InlineKeyboardButton("🔥 PIA 1600IPs", callback_data="PIA_1600")],
+        [InlineKeyboardButton("🔥 9Proxy 200IPs", callback_data="9PROXY_200"),
+         InlineKeyboardButton("🔥 9Proxy 400IPs", callback_data="9PROXY_400")],
+        [InlineKeyboardButton("🔥 9Proxy 800IPs", callback_data="9PROXY_800"),
+         InlineKeyboardButton("🔥 9Proxy 2000IPs", callback_data="9PROXY_2000")]
+    ]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 # Comando /help
@@ -57,6 +59,23 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
+# Diccionario de precios
+plan_prices = {
+    "ABC_1GB": "5.50 USD",
+    "ABC_5GB": "12 USD",
+    "ABC_10GB": "18 USD",
+    "ABC_20GB": "30 USD",
+    "ABC_50GB": "65 USD",
+    "PIA_200": "20 USD",
+    "PIA_400": "35 USD",
+    "PIA_800": "55 USD",
+    "PIA_1600": "110 USD",
+    "9PROXY_200": "20 USD",
+    "9PROXY_400": "35 USD",
+    "9PROXY_800": "55 USD",
+    "9PROXY_2000": "120 USD"
+}
+
 # Selección de plan
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -68,7 +87,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    (user.id, user.username or "SinUsername", plan, ""))
     conn.commit()
 
-    text = f"✅ Plan seleccionado: *{plan.replace('_', ' ')}*\n\nSelecciona la red para el pago:"
+    plan_name = plan.replace("_", " ")
+    price = plan_prices.get(plan, "Precio no disponible")
+    text = (
+        f"✅ Plan seleccionado: *{plan_name}*\n"
+        f"💰 *Precio:* {price}\n\n"
+        "Selecciona la red para el pago:"
+    )
     keyboard = [
         [InlineKeyboardButton("💸 USDT TRC20", callback_data="wallet_TRC20")],
         [InlineKeyboardButton("💸 USDT BEP20", callback_data="wallet_BEP20")],
